@@ -1,15 +1,153 @@
-name: my-snap-name # you probably want to 'snapcraft register <name>'
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
-summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+name: audacity
+version: 'git'
+summary: Audio software for multi-track recording and editing
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  Audacity. free, open source, cross-platform audio software for multi-track
+  recording and editing. http://www.audacityteam.org/
 
-confinement: devmode # use 'strict' once you have the right plugs and slots
+grade: stable
+confinement: strict
+
+apps:
+  audacity:
+    environment:
+      ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
+    command: desktop-launch $SNAP/usr/bin/audacity
+    desktop: usr/share/applications/audacity.desktop
+    plugs:
+    - desktop
+    - desktop-legacy
+    - pulseaudio
+    - wayland
+    - x11
 
 parts:
-  my-part:
-    # See 'snapcraft plugins'
+  alsa-config:
+    plugin: dump
+    source: alsa
+    organize:
+      alsa.conf: etc/alsa.conf
+
+  alsa-lib:
+    plugin: autotools
+    source: ftp://ftp.alsa-project.org/pub/lib/alsa-lib-1.1.5.tar.bz2
+    configflags:
+    - --prefix=/usr
+    - --sysconfdir=/etc
+    - --libexec=/usr/lib
+    - --libdir=/usr/lib
+    - --localstatedir=/var
+    - --with-configdir=/snap/audacity/current/usr/share/alsa
+    - --with-plugindir=/snap/audacity/current/usr/lib/alsa-lib
+    - --disable-static
+    organize:
+      snap/*/current/usr/lib/*: usr/lib/
+    stage:
+    - usr/include
+    - usr/lib
+    prime:
+    - -usr/bin
+    - -usr/include
+    - -usr/lib/pkgconfig
+    - -usr/share/alsa/alsa.conf
+    - -usr/share/alsa/pcm
+    - -usr/share/alsa/topology/broadwell
+
+  alsa-plugins:
+    after: [alsa-lib]
+    plugin: autotools
+    source: ftp://ftp.alsa-project.org/pub/plugins/alsa-plugins-1.1.5.tar.bz2
+    configflags:
+    - --prefix=/usr
+    - --sysconfdir=/etc
+    - --libexec=/usr/lib
+    - --libdir=/usr/lib
+    - --localstatedir=/var
+    - --disable-oss
+    - --disable-usbstream
+    - --disable-arcamav
+    - --disable-avcodec
+    - --with-plugindir=/snap/${SNAPCRAFT_PROJECT_NAME}/current/usr/lib/alsa-lib
+    - --disable-static
+    organize:
+      snap/*/current/usr/lib/*: usr/lib/
+    stage:
+    - usr/lib
+    - usr/share/alsa
+    build-packages:
+    - libpulse-dev
+    stage-packages:
+    - libpulse0
+
+  alsa:
     plugin: nil
+    after: [alsa-plugins, alsa-lib]
+
+  audacity:
+    after: [desktop-gtk2, alsa]
+    plugin: autotools
+    source: https://github.com/diddledan/audacity.git
+    source-branch: patch-1
+    prepare: |
+      sed -i 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
+    configflags:
+    - --enable-sse
+    - --prefix=/usr
+    - --with-ffmpeg
+    - --with-lame
+    - --with-libflac
+    - --with-libid3tag
+    - --with-libmad
+    - --with-libsbsms
+    - --with-libsndfile
+    - --with-libsoxr
+    - --with-libvamp
+    - --with-libvorbis
+    - --with-lv2
+    - --with-midi
+    - --with-portaudio=local
+    - --with-portmidi
+    - --with-portmixer
+    - --with-soundtouch
+    - --with-twolame
+    build-packages:
+    - gettext
+    - libavcodec-dev
+    - libexpat1-dev
+    - libflac-dev
+    - libgtk2.0-dev
+    - libid3tag0-dev
+    - liblv2dynparam1-dev
+    - libmad0-dev
+    - libmp3lame-dev
+    - libportmidi-dev
+    - libpulse-dev
+    - libsbsms-dev
+    - libsndfile1-dev
+    - libsoundtouch-dev
+    - libsoxr-dev
+    - libtwolame-dev
+    - libvamp-hostsdk3v5
+    - libvorbis-dev
+    - libwxbase3.0-dev
+    - libwxgtk3.0-dev
+    - python
+    stage-packages:
+    - libavcodec-ffmpeg56
+    - libexpat1
+    - libflac8
+    - libgtk2.0-0
+    - libid3tag0
+    - liblv2dynparamhost1-1
+    - libmad0
+    - libmp3lame0
+    - libportmidi0
+    - libpulse0
+    - libsbsms10
+    - libsndfile1
+    - libsoundtouch1
+    - libsoxr0
+    - libtwolame0
+    - libvorbis0a
+    - libwxbase3.0-0v5
+    - libwxgtk3.0-0v5
