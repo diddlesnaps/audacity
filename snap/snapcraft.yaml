@@ -81,7 +81,7 @@ parts:
 
   alsa:
     plugin: nil
-    after: [alsa-plugins, alsa-lib]
+    after: [alsa-plugins, alsa-lib, alsa-config]
 
   audacity:
     after: [desktop-gtk2, alsa]
