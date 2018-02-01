@@ -10,13 +10,14 @@ confinement: strict
 
 apps:
   audacity:
-    environment:
-      ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
     command: desktop-launch $SNAP/usr/bin/audacity
     desktop: usr/share/applications/audacity.desktop
+    environment:
+      ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
     plugs:
     - desktop
     - desktop-legacy
+    - home
     - pulseaudio
     - wayland
     - x11
@@ -37,11 +38,11 @@ parts:
     - --libexec=/usr/lib
     - --libdir=/usr/lib
     - --localstatedir=/var
-    - --with-configdir=/snap/audacity/current/usr/share/alsa
-    - --with-plugindir=/snap/audacity/current/usr/lib/alsa-lib
+    - --with-configdir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/alsa
+    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
     - --disable-static
     organize:
-      snap/*/current/usr/lib/*: usr/lib/
+      snap/audacity/current/usr/: usr/
     stage:
     - usr/include
     - usr/lib
@@ -67,10 +68,10 @@ parts:
     - --disable-usbstream
     - --disable-arcamav
     - --disable-avcodec
-    - --with-plugindir=/snap/${SNAPCRAFT_PROJECT_NAME}/current/usr/lib/alsa-lib
+    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
     - --disable-static
     organize:
-      snap/*/current/usr/lib/*: usr/lib/
+      snap/audacity/current/usr/: usr/
     stage:
     - usr/lib
     - usr/share/alsa
@@ -149,5 +150,6 @@ parts:
     - libsoxr0
     - libtwolame0
     - libvorbis0a
+    - libvorbisfile3
     - libwxbase3.0-0v5
     - libwxgtk3.0-0v5
