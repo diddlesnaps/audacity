@@ -10,10 +10,8 @@ confinement: strict
 
 apps:
   audacity:
-    command: desktop-launch $SNAP/usr/bin/audacity
+    command: desktop-launch alsa-launch $SNAP/usr/bin/audacity
     desktop: usr/share/applications/audacity.desktop
-    environment:
-      ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
     plugs:
     - desktop
     - desktop-legacy
@@ -23,78 +21,19 @@ apps:
     - x11
 
 parts:
-  alsa-config:
-    plugin: dump
-    source: alsa
-    organize:
-      alsa.conf: etc/alsa.conf
-
-  alsa-lib:
-    plugin: autotools
-    source: http://archive.ubuntu.com/ubuntu/pool/main/a/alsa-lib/alsa-lib_1.1.3.orig.tar.bz2
-    # source: ftp://ftp.alsa-project.org/pub/lib/alsa-lib-1.1.5.tar.bz2
-    configflags:
-    - --prefix=/usr
-    - --sysconfdir=/etc
-    - --libexec=/usr/lib
-    - --libdir=/usr/lib
-    - --localstatedir=/var
-    - --with-configdir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/alsa
-    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
-    - --disable-static
-    organize:
-      snap/audacity/current/usr/lib/: usr/lib/
-    stage:
-    - usr/include
-    - usr/lib
-    prime:
-    - -usr/bin
-    - -usr/include
-    - -usr/lib/pkgconfig
-    - -usr/share/alsa/alsa.conf
-    - -usr/share/alsa/pcm
-    - -usr/share/alsa/topology/broadwell
-
+  alsa:
+    after: [alsa-plugins, alsa-lib]
   alsa-plugins:
     after: [alsa-lib]
-    plugin: autotools
-    source: http://archive.ubuntu.com/ubuntu/pool/main/a/alsa-plugins/alsa-plugins_1.1.1.orig.tar.bz2
-    # source: ftp://ftp.alsa-project.org/pub/plugins/alsa-plugins-1.1.5.tar.bz2
-    configflags:
-    - --prefix=/usr
-    - --sysconfdir=/etc
-    - --libexec=/usr/lib
-    - --libdir=/usr/lib
-    - --localstatedir=/var
-    - --disable-oss
-    - --disable-usbstream
-    - --disable-arcamav
-    - --disable-avcodec
-    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
-    - --disable-static
-    organize:
-      snap/audacity/current/usr/lib/: usr/lib/
-    stage:
-    - usr/lib
-    - usr/share/alsa
-    build-packages:
-    - libpulse-dev
-    stage-packages:
-    - libpulse0
-
-  alsa:
-    plugin: nil
-    after: [alsa-plugins, alsa-lib, alsa-config]
 
   audacity:
     after: [desktop-gtk2, alsa]
     plugin: autotools
-    source: https://github.com/diddledan/audacity.git
-    source-branch: patch-1
+    source: https://github.com/audacity/audacity.git
+    source-tag: Audacity-2.2.2
     prepare: |
       sed -i 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
     configflags:
-    - --enable-sse
     - --prefix=/usr
     - --with-ffmpeg
     - --with-lame
@@ -155,3 +94,5 @@ parts:
     - libvorbisfile3
     - libwxbase3.0-0v5
     - libwxgtk3.0-0v5
+    stage:
+    - -usr/share/alsa
