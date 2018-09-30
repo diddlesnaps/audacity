@@ -1,5 +1,5 @@
 name: audacity
-version: 'git'
+adopt-info: audacity
 summary: Audio software for multi-track recording and editing
 description: |
   Audacity. free, open source, cross-platform audio software for multi-track
@@ -21,17 +21,63 @@ apps:
     - x11
 
 parts:
+  # specify remote part build order
   alsa:
-    after: [alsa-plugins, alsa-lib]
+    after: [alsa-lib, alsa-plugins]
+  alsa-lib:
+    # configflags needed until LP#1766878 is fixed
+    configflags:
+    - --prefix=/usr
+    - --sysconfdir=/etc
+    - --libexec=/usr/lib
+    - --libdir=/usr/lib
+    - --localstatedir=/var
+    - --with-configdir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/share/alsa
+    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
+    - --disable-alisp
+    - --disable-aload
+    - --disable-python
+    - --disable-rawmidi
+    - --disable-static
+    - --disable-topology
+    - --disable-ucm
+    - --enable-symbolic-functions
   alsa-plugins:
     after: [alsa-lib]
+    # configflags needed until LP#1766878 is fixed
+    configflags:
+    - --prefix=/usr
+    - --sysconfdir=/etc
+    - --libexec=/usr/lib
+    - --libdir=/usr/lib
+    - --localstatedir=/var
+    - --disable-arcamav
+    - --disable-avcodec
+    - --disable-jack
+    - --disable-mix
+    - --disable-oss
+    - --disable-usbstream
+    - --with-plugindir=/snap/$SNAPCRAFT_PROJECT_NAME/current/usr/lib/alsa-lib
+    - --disable-static
+    - LDFLAGS=-L$SNAPCRAFT_STAGE/usr/lib
 
   audacity:
     after: [desktop-gtk2, alsa]
     plugin: autotools
     source: https://github.com/audacity/audacity.git
-    source-tag: Audacity-2.2.2
-    prepare: |
+    override-pull: |
+      snapcraftctl pull
+      last_committed_tag="$(git describe --tags --abbrev=0)"
+      last_released_tag="$(snap info $SNAPCRAFT_PROJECT_NAME | awk '$1 == "beta:" { print $2 }')"
+      # If the latest tag from the upstream project has not been released to
+      # beta, build that tag instead of master.
+      if [ "${last_committed_tag}" != "${last_released_tag}" ]; then
+        git fetch
+        git checkout "${last_committed_tag}"
+        snapcraftctl set-version "${last_committed_tag}"
+      else
+        snapcraftctl set-version "$(git rev-parse --short HEAD)"
+      fi
       sed -i 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
     configflags:
     - --prefix=/usr
