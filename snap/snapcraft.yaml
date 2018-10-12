@@ -88,7 +88,7 @@ parts:
       if [ "${last_committed_tag}" != "${last_released_tag}" ]; then
         git fetch
         git checkout "${last_committed_tag}"
-        snapcraftctl set-version "${last_committed_tag}"
+        snapcraftctl set-version "$(echo "${last_committed_tag}" | sed -E -e "s|^$SNAPCRAFT_PROJECT_NAME-?||i")"
       else
         snapcraftctl set-version "$(git rev-parse --short HEAD)"
       fi
