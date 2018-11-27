@@ -33,12 +33,6 @@ apps:
     - x11
 
 parts:
-  patches:
-    source: patches/
-    source-type: local
-    plugin: dump
-    prime: [-*]
-
   # specify remote part build order
   alsa:
     after: [alsa-lib, alsa-plugins]
@@ -161,7 +155,7 @@ parts:
       - -usr/share/man
 
   audacity:
-    after: [desktop-gtk2, alsa, ffmpeg, patches]
+    after: [desktop-gtk2, alsa, ffmpeg]
     plugin: autotools
     source: https://github.com/audacity/audacity.git
     parse-info: [usr/share/appdata/audacity.appdata.xml]
@@ -178,7 +172,6 @@ parts:
       else
         snapcraftctl set-version "$(git rev-parse --short HEAD)"
       fi
-      patch -Np1 -i $SNAPCRAFT_STAGE/tmpdir.diff
       sed -i 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
     configflags:
     - --prefix=/usr
