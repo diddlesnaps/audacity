@@ -1,6 +1,5 @@
 name: audacity
 adopt-info: audacity
-summary: Audio software for multi-track recording and editing
 description: |
   Audacity® is a free, easy-to-use, multi-track audio editor and recorder for Windows,
   Mac OS X, GNU/Linux and other operating systems. The interface is translated into
@@ -34,6 +33,12 @@ apps:
     - x11
 
 parts:
+  patches:
+    source: patches/
+    source-type: local
+    plugin: dump
+    prime: [-*]
+
   # specify remote part build order
   alsa:
     after: [alsa-lib, alsa-plugins]
@@ -74,8 +79,89 @@ parts:
     - --disable-static
     - LDFLAGS=-L$SNAPCRAFT_STAGE/usr/lib
 
+  ffmpeg:
+    after: [alsa]
+    plugin: autotools
+    source: https://github.com/FFmpeg/FFmpeg.git
+    source-tag: n4.1
+    build-packages:
+      - libass-dev
+      - libbz2-dev
+      - libcrystalhd-dev
+      - libdrm-dev
+      - libfdk-aac-dev
+      - liblzma-dev
+      - libmp3lame-dev
+      - libogg-dev
+      - libomxil-bellagio-dev
+      - libopus-dev
+      - libsctp-dev
+      - libspeex-dev
+      - libtheora-dev
+      - libtwolame-dev
+      - libvorbis-dev
+      - libx11-dev
+      - libxcb-shape0-dev
+      - libxcb-shm0-dev
+      - libxcb-xfixes0-dev
+      - nasm
+      - pkg-config
+      - yasm
+      - zlib1g-dev
+    stage-packages:
+      - libass5
+      - libcrystalhd3
+      - libfdk-aac0
+      - libmp3lame0
+      - libogg0
+      - libopus0
+      - libspeex1
+      - libtheora0
+      - libtwolame0
+      - libx11-6
+      - libxau6
+      - libxcb-shape0
+      - libxcb-shm0
+      - libxcb-xfixes0
+      - libxcb1
+      - libxdmcp6
+      - libxext6
+      - zlib1g
+    configflags:
+      - --prefix=/usr
+      - --disable-debug
+      - --disable-doc
+      - --disable-static
+      - --enable-avisynth
+      - --enable-ffplay
+      - --enable-gpl
+      - --enable-libass
+      - --enable-libfdk-aac
+      - --enable-libfontconfig
+      - --enable-libfreetype
+      - --enable-libmp3lame
+      - --enable-libopus
+      - --enable-libpulse
+      - --enable-libspeex
+      - --enable-libtheora
+      - --enable-libtwolame
+      - --enable-libvorbis
+      - --enable-libxcb
+      - --enable-nonfree
+      - --enable-omx
+      - --enable-runtime-cpudetect
+      - --enable-shared
+      - --enable-version3
+    prime:
+      - usr/bin
+      - usr/lib
+      - -usr/lib/pkgconfig
+      - -usr/include
+      - -usr/share/doc
+      - -usr/share/man
+
   audacity:
-    after: [desktop-gtk2, alsa]
+    after: [desktop-gtk2, alsa, ffmpeg, patches]
     plugin: autotools
     source: https://github.com/audacity/audacity.git
     parse-info: [usr/share/appdata/audacity.appdata.xml]
@@ -92,9 +178,11 @@ parts:
       else
         snapcraftctl set-version "$(git rev-parse --short HEAD)"
       fi
+      patch -Np1 -i $SNAPCRAFT_STAGE/tmpdir.diff
       sed -i 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
     configflags:
     - --prefix=/usr
+    - --with-expat
     - --with-ffmpeg
     - --with-lame
     - --with-libflac
@@ -102,27 +190,29 @@ parts:
     - --with-libmad
     - --with-libsbsms
     - --with-libsndfile
+    - --with-soundtouch
     - --with-libsoxr
+    - --with-twolame
     - --with-libvamp
     - --with-libvorbis
     - --with-lv2
+    - --with-portaudio
     - --with-midi
-    - --with-portaudio=local
     - --with-portmidi
+    - --with-widgetextra=local
     - --with-portmixer
-    - --with-soundtouch
-    - --with-twolame
     build-packages:
     - gettext
-    - libavcodec-dev
     - libexpat1-dev
     - libflac-dev
+    - libflac++-dev
     - libgtk2.0-dev
     - libid3tag0-dev
     - liblv2dynparam1-dev
     - libmad0-dev
     - libmp3lame-dev
     - libportmidi-dev
+    - libportsmf-dev
     - libpulse-dev
     - libsbsms-dev
     - libsndfile1-dev
@@ -130,26 +220,31 @@ parts:
     - libsoxr-dev
     - libtwolame-dev
     - libvamp-hostsdk3v5
+    - libvamp-sdk2v5
     - libvorbis-dev
     - libwxbase3.0-dev
     - libwxgtk3.0-dev
     - python
+    - vamp-plugin-sdk
     stage-packages:
-    - libavcodec-ffmpeg56
     - libexpat1
     - libflac8
+    - libflac++6v5
     - libgtk2.0-0
     - libid3tag0
     - liblv2dynparamhost1-1
     - libmad0
     - libmp3lame0
     - libportmidi0
+    - libportsmf0v5
     - libpulse0
     - libsbsms10
     - libsndfile1
     - libsoundtouch1
     - libsoxr0
     - libtwolame0
+    - libvamp-hostsdk3v5
+    - libvamp-sdk2v5
     - libvorbis0a
     - libvorbisfile3
     - libwxbase3.0-0v5
