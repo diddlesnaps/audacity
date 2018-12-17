@@ -29,6 +29,7 @@ apps:
     - desktop-legacy
     - home
     - pulseaudio
+    - removable-media
     - wayland
     - x11
 
