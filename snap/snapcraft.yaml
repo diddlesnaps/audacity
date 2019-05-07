@@ -22,10 +22,10 @@ architectures:
   - build-on: i386
 
 layout:
-  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
-    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /etc/asound.conf:
     bind-file: $SNAP/etc/alsa.conf
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /usr/share/alsa/alsa.conf:
     bind-file: $SNAP/usr/share/alsa/alsa.conf
   /usr/share/audacity:
