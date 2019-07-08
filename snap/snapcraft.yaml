@@ -56,12 +56,14 @@ apps:
   audacity:
     command: desktop-launch $SNAP/usr/bin/audacity
     desktop: usr/share/applications/audacity.desktop
+    common-id: org.audacityteam.Audacity
     plugs:
       - desktop
       - desktop-legacy
       - home
       - pulseaudio
       - removable-media
+      - unity7
       - wayland
       - x11
 
