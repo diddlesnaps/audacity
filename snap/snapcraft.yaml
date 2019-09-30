@@ -58,6 +58,8 @@ apps:
     desktop: usr/share/applications/audacity.desktop
     common-id: org.audacityteam.Audacity
     plugs:
+      - audio-playback
+      - audio-record
       - desktop
       - desktop-legacy
       - home
