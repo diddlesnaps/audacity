@@ -144,6 +144,9 @@ parts:
     configflags:
       - --prefix=/usr
       - --with-gtk
+    build-environment:
+      - CFLAGS: -O2 -pipe
+      - CXXFLAGS: -O2 -pipe
     override-build: |
       snapcraftctl build
       $SNAPCRAFT_STAGE/fix-symlinks.sh
@@ -174,6 +177,9 @@ parts:
     configflags:
       - --prefix=/usr
       - --disable-dynamic-loading
+    build-environment:
+      - CFLAGS: -O2 -pipe
+      - CXXFLAGS: -O2 -pipe
     build-packages:
       - cmake
       - gettext
