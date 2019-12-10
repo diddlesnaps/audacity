@@ -88,6 +88,7 @@ parts:
     source: scripts
     plugin: dump
     organize:
+      build-ld-cache: bin/build-ld-cache
       check-ld-cache: bin/check-ld-cache
 
   desktop-gtk2:
