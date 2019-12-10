@@ -23,24 +23,18 @@ architectures:
 
 layout:
   /etc/asound.conf:
-    bind-file: $SNAP/etc/alsa.conf
+    symlink: $SNAP/etc/alsa.conf
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
-    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+    symlink: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /usr/share/alsa/alsa.conf:
-    bind-file: $SNAP/usr/share/alsa/alsa.conf
+    symlink: $SNAP/usr/share/alsa/alsa.conf
   /usr/share/audacity:
-    bind: $SNAP/usr/share/audacity
-  /usr/share/locale:
-    bind: $SNAP/usr/share/locale
+    symlink: $SNAP/usr/share/audacity
 
 plugs:
   gtk-2-engines:
     interface: content
     target: $SNAP/lib/gtk-2.0
-    default-provider: gtk2-common-themes
-  gtk-2-themes:
-    interface: content
-    target: $SNAP/share/themes
     default-provider: gtk2-common-themes
   icon-themes:
     interface: content
@@ -51,10 +45,14 @@ environment:
   GTK_PATH: $SNAP/lib/gtk-2.0
   GTK_DATA_PREFIX: $SNAP
   XDG_DATA_DIRS: $SNAP/share:$XDG_DATA_DIRS
+  FINAL_BINARY: $SNAP/usr/bin/audacity
 
 apps:
   audacity:
-    command: desktop-launch $SNAP/usr/bin/audacity
+    command: usr/bin/audacity
+    command-chain:
+    - bin/desktop-launch
+    - bin/check-ld-cache
     desktop: usr/share/applications/audacity.desktop
     common-id: org.audacityteam.Audacity
     plugs:
@@ -85,6 +83,12 @@ parts:
       chmod +x $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
     prime:
       - -*
+
+  scripts:
+    source: scripts
+    plugin: dump
+    organize:
+      check-ld-cache: bin/check-ld-cache
 
   desktop-gtk2:
     source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
@@ -196,3 +200,39 @@ parts:
       - libmp3lame0
       - libpulse0
       - libsm6
+
+  # Ship a default set of GSettings schemas so that the correct theme is used
+  # in Wayland sessions on Ubuntu (see https://forum.snapcraft.io/t/7806/3).
+  desktop-settings-packages:
+    after: [ desktop-gtk2 ]
+    plugin: nil
+    build-packages:
+    - libglib2.0-bin
+    stage-packages:
+    - gsettings-desktop-schemas
+    - ubuntu-settings
+    prime:
+    - usr/share/glib-2.0/schemas/*
+
+  desktop-settings-build:
+    plugin: nil
+    after: [ audacity, desktop-settings-packages ]
+    override-prime: |
+      set -eux
+      glib-compile-schemas usr/share/glib-2.0/schemas
+
+  cleanup:
+    after: [ audacity, desktop-settings-build ]
+    plugin: nil
+    build-snaps:
+    - core18
+    - gtk-common-themes
+    - gtk2-common-themes
+    override-prime: |
+      set -eux
+      cd /snap/core18/current
+      find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/{} \;
+      cd /snap/gtk-common-themes/current
+      find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/usr/{} \;
+      cd /snap/gtk2-common-themes/current/lib
+      find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/{} \;

@@ -1,0 +1,3 @@
+#!/bin/bash -ex
+
+exec "$SNAP/bin/desktop-launch" "$SNAP/snap/hooks/build-ld-cache"
