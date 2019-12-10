@@ -201,6 +201,21 @@ parts:
       - libpulse0
       - libsm6
 
+  gtk-locales:
+    plugin: nil
+    build-packages:
+    - apt
+    - dpkg
+    override-pull: |
+      set -eux
+      apt download "language-pack-gnome-*-base"
+    override-build: |
+      set -eux
+      for deb in *.deb; do dpkg-deb -x $deb .; done
+      find usr/share/locale-langpack -type f -not -name "gtk20*.mo" -exec rm '{}' \;
+      mkdir -p $SNAPCRAFT_PART_INSTALL/usr/share
+      cp -R usr/share/locale-langpack $SNAPCRAFT_PART_INSTALL/usr/share/
+
   # Ship a default set of GSettings schemas so that the correct theme is used
   # in Wayland sessions on Ubuntu (see https://forum.snapcraft.io/t/7806/3).
   desktop-settings-packages:
