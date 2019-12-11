@@ -22,14 +22,8 @@ architectures:
   - build-on: i386
 
 layout:
-  /etc/asound.conf:
-    symlink: $SNAP/etc/alsa.conf
   /etc/ld.so.cache:
     bind-file: $SNAP_DATA/etc/ld.so.cache
-  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
-    symlink: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
-  /usr/share/alsa/alsa.conf:
-    symlink: $SNAP/usr/share/alsa/alsa.conf
   /usr/share/audacity:
     symlink: $SNAP/usr/share/audacity
 
@@ -44,10 +38,12 @@ plugs:
     default-provider: gtk-common-themes
 
 environment:
+  ALSA_CONFIG_PATH: $SNAP/etc/asound.conf
+  FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
   GTK_DATA_PREFIX: $SNAP
+  LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   XDG_DATA_DIRS: $SNAP/share:$XDG_DATA_DIRS
-  FINAL_BINARY: $SNAP/usr/bin/audacity
 
 apps:
   audacity:
