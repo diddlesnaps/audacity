@@ -24,6 +24,8 @@ architectures:
 layout:
   /etc/asound.conf:
     symlink: $SNAP/etc/alsa.conf
+  /etc/ld.so.cache:
+    symlink: $SNAP_DATA/etc/ld.so.cache
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
     symlink: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /usr/share/alsa/alsa.conf:
