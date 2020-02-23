@@ -24,6 +24,8 @@ architectures:
 layout:
   /etc/ld.so.cache:
     bind-file: $SNAP_DATA/etc/ld.so.cache
+  /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
+    bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /usr/share/audacity:
     symlink: $SNAP/usr/share/audacity
 
@@ -38,7 +40,8 @@ plugs:
     default-provider: gtk-common-themes
 
 environment:
-  ALSA_CONFIG_PATH: $SNAP/etc/asound.conf
+  UBUNTU_MENUPROXY: '0'
+  ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
   FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
   GTK_DATA_PREFIX: $SNAP
@@ -172,7 +175,8 @@ parts:
       else
         snapcraftctl set-version "$(git rev-parse --short HEAD)"
       fi
-      sed -i -E 's|Icon=.*|Icon=${SNAP}/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
+      sed -i -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
+      sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
       for configure in configure lib-src/FileDialog/configure lib-src/lib-widget-extra/configure lib-src/mod-nyq-bench/configure lib-src/mod-script-pipe/configure; do
         sed -i -E 's|wxconfigargs="((\$static_wx_preference \$unicode_preference (\$wxconfigargs )?(\$debug_preference )?)?\$wx_preference)"|wxconfigargs="\1 --prefix=$SNAPCRAFT_STAGE/usr"|' $configure
