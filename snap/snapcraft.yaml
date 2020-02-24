@@ -34,10 +34,18 @@ plugs:
     interface: content
     target: $SNAP/lib/gtk-2.0
     default-provider: gtk2-common-themes
-  icon-themes:
+  gtk-3-themes:
+    default-provider: gtk-common-themes:gtk-3-themes
     interface: content
-    target: $SNAP/share/icons
-    default-provider: gtk-common-themes
+    target: $SNAP/data-dir/themes
+  sound-themes:
+    default-provider: gtk-common-themes:sound-themes
+    interface: content
+    target: $SNAP/data-dir/sounds
+  icon-themes:
+    default-provider: gtk-common-themes:icon-themes
+    interface: content
+    target: $SNAP/data-dir/icons
 
 environment:
   UBUNTU_MENUPROXY: '0'
@@ -107,6 +115,9 @@ parts:
       - adwaita-icon-theme
       - gnome-themes-standard
       - shared-mime-info
+      - libatk-adaptor
+      - libcanberra-gtk-module
+      - libgail-common
       - libgtk2.0-0
       - libgdk-pixbuf2.0-0
       - libglib2.0-bin
@@ -248,8 +259,6 @@ parts:
     - gtk2-common-themes
     override-prime: |
       set -eux
-      cd /snap/core18/current
-      find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/{} \;
       cd /snap/gtk-common-themes/current
       find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/usr/{} \;
       cd /snap/gtk2-common-themes/current/lib
