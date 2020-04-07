@@ -34,10 +34,10 @@ plugs:
     interface: content
     target: $SNAP/lib/gtk-2.0
     default-provider: gtk2-common-themes
-  gtk-3-themes:
-    default-provider: gtk-common-themes:gtk-3-themes
+  gtk-2-themes:
     interface: content
     target: $SNAP/data-dir/themes
+    default-provider: gtk-2-themes
   sound-themes:
     default-provider: gtk-common-themes:sound-themes
     interface: content
@@ -167,6 +167,9 @@ parts:
     override-build: |
       snapcraftctl build
       $SNAPCRAFT_STAGE/fix-symlinks.sh
+    stage-packages:
+      - libice6
+      - libsm6
 
   audacity:
     after: [desktop-gtk2, alsa, wxwidgets]
