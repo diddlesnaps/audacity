@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 # delete empty entries in the LD_LIBRARY_PATH
 # i.e. change "/a/b/c:/1/2/3::/other" into "/a/b/c:/1/2/3:/other"
@@ -10,8 +10,14 @@ LD_LIBRARY_PATH="${LD_LIBRARY_PATH#:}"
 # Remove trailing empty element if it exists
 LD_LIBRARY_PATH="${LD_LIBRARY_PATH%:}"
 
-# run ldconfig on our LD_LIBRARY_PATH lib dirs
 IFS=':' read -ra PATHS <<< "$LD_LIBRARY_PATH"
-mkdir -p "$SNAP_DATA/etc"
-# ldconfig -v -C "$SNAP_DATA/fake-etc/ld.so.cache" -f "$SNAP_DATA/etc/ld.so.conf" "${PATHS[@]}"
-ldconfig -v -C "$SNAP_DATA/etc/ld.so.cache" "${PATHS[@]}"
+# The fake-etc directory is to allow ldconfig to unlink the
+# ld.so.cache file without breaking the bind-file layout on
+# the real ld.so.cache file.
+mkdir -p "$SNAP_DATA/etc" "$SNAP_DATA/fake-etc"
+ldconfig -v -C "$SNAP_DATA/fake-etc/ld.so.cache" "${PATHS[@]}"
+
+# install the new ld.so.cache to the global location by
+# copying it. We must not unlink the global file or the snap
+# 'layout' configuration will break.
+cp "$SNAP_DATA/fake-etc/ld.so.cache" "$SNAP_DATA/etc/ld.so.cache"
