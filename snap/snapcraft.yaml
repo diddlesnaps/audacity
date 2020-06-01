@@ -33,19 +33,19 @@ plugs:
   gtk-2-engines:
     interface: content
     target: $SNAP/lib/gtk-2.0
-    default-provider: gtk2-common-themes
+    default-provider: gtk2-common-themes:gtk-2-engines
   gtk-2-themes:
     interface: content
     target: $SNAP/data-dir/themes
-    default-provider: gtk-2-themes
+    default-provider: gtk-common-themes:gtk-2-themes
   sound-themes:
-    default-provider: gtk-common-themes:sound-themes
     interface: content
     target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes:sound-themes
   icon-themes:
-    default-provider: gtk-common-themes:icon-themes
     interface: content
     target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes:icon-themes
 
 environment:
   UBUNTU_MENUPROXY: '0'
@@ -58,11 +58,11 @@ environment:
 
 apps:
   audacity:
-    command: usr/bin/audacity
+    command: bin/check-ld-cache $SNAP/usr/bin/audacity
+    # extensions: [gnome-3-28]
     command-chain:
     - bin/desktop-launch
     - snap/command-chain/alsa-launch
-    - bin/check-ld-cache
     desktop: usr/share/applications/audacity.desktop
     common-id: org.audacityteam.Audacity
     plugs:
@@ -82,13 +82,11 @@ parts:
     # REF: https://unix.stackexchange.com/questions/100918/convert-absolute-symlink-to-relative-symlink-with-simple-linux-command
     plugin: nil
     override-build: |
-      cat <<EOF > $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
-      cd \$SNAPCRAFT_PART_INSTALL
-      find . -lname '/*' |
-      while read l ; do
-        echo ln -sf \$(echo \$(echo \$l | sed 's|/[^/]*|/..|g')\$(readlink \$l) | sed 's/.....//') \$l
-      done |
-      sh
+      cat <<'EOF' > $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
+      cd $SNAPCRAFT_PART_INSTALL
+      find . -lname '/*' | while read l ; do
+        echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
+      done | sh
       EOF
       chmod +x $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
     prime:
@@ -140,37 +138,59 @@ parts:
       - libasound2-plugins
 
   wxwidgets:
-    after: [fix-symlinks, desktop-gtk2]
+    after: [desktop-gtk2]
     source: https://github.com/audacity/wxWidgets.git
     plugin: autotools
     configflags:
       - --prefix=/usr
       - --with-gtk
+      - --enable-html
+      - --enable-intl
+      - --enable-xlocale
+      - --enable-sockets
+      - --enable-debugreport
     override-build: |
       snapcraftctl build
       rm $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
       ln -s ../lib/wx/config/gtk2-unicode-3.1 $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
+      sed -E -i 's|^prefix=(.*)-/usr|prefix=\1-'"$SNAPCRAFT_STAGE"'/usr|' $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
     build-environment:
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
     build-packages:
-      - libjpeg8-dev
+      - g++
       - libglu1-mesa-dev
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer1.0-dev
       - libgtk2.0-dev
+      - libjpeg8-dev
+      - liblzma-dev
+      - libmspack-dev
+      - libnotify-dev
+      - libsdl2-dev
       - libsecret-1-dev
       - libsoup2.4-dev
+      - libtiff-dev
+      - nasm
     stage-packages:
-      - libjpeg8
       - libglu1-mesa
+      - libgstreamer-plugins-base1.0-0
+      - libgstreamer1.0-0
       - libgtk2.0-0
       - libice6
+      - libjpeg8
+      - liblzma5
+      - libmspack0
+      - libnotify4
+      - libsdl2-2.0-0
       - libsecret-1-0
       - libsm6
       - libsoup2.4-1
+      - libtiff5
 
   audacity:
-    after: [desktop-gtk2, alsa-mixin, wxwidgets]
-    plugin: autotools
+    after: [alsa-mixin, desktop-gtk2, wxwidgets]
+    plugin: cmake
     source: https://github.com/audacity/audacity.git
     parse-info: [usr/share/appdata/audacity.appdata.xml]
     override-pull: |
@@ -189,30 +209,60 @@ parts:
       sed -i -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
       sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
-      for configure in configure lib-src/FileDialog/configure lib-src/lib-widget-extra/configure lib-src/mod-nyq-bench/configure lib-src/mod-script-pipe/configure; do
-        sed -i -E 's|wxconfigargs="((\$static_wx_preference \$unicode_preference (\$wxconfigargs )?(\$debug_preference )?)?\$wx_preference)"|wxconfigargs="\1 --prefix=$SNAPCRAFT_STAGE/usr"|' $configure
-      done
     configflags:
-      - --prefix=/usr
+      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_BUILD_TYPE=Release
+    build-snaps:
+      - cmake
     build-environment:
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
+      - WX_CONFIG: $SNAPCRAFT_STAGE/usr/bin/wx-config
     build-packages:
-      - cmake
       - gettext
       - libavformat-dev
+      - libflac-dev
+      - libflac++-dev
       - libgtk2.0-dev
+      - libid3tag0-dev
       - libjack-jackd2-dev
+      - libmad0-dev
       - libmp3lame-dev
+      - libogg-dev
+      - libportmidi-dev
+      - libportsmf-dev
       - libpulse-dev
+      - libsbsms-dev
+      - libsndfile1-dev
+      - libsoundtouch-dev
+      - libsoxr-dev
+      - libtwolame-dev
+      - libvamp-hostsdk3v5
+      - libvamp-sdk2v5
+      - libvorbis-dev
       - python
+      - python3
     stage-packages:
       - libavformat57
+      - libflac++6v5
+      - libflac8
       - libgtk2.0-0
-      - libice6
+      - libid3tag0
+      - libmad0
       - libmp3lame0
+      - libogg0
+      - libportmidi0
+      - libportsmf0v5
       - libpulse0
-      - libsm6
+      - libsbsms10
+      - libsndfile1
+      - libsoundtouch1
+      - libsoxr0
+      - libtwolame0
+      - libvorbis0a
+      - libvorbisenc2
+      - libvorbisfile3
+      - nasm
 
   gtk-locales:
     plugin: nil
