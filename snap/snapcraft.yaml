@@ -27,7 +27,9 @@ layout:
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   /usr/share/audacity:
-    symlink: $SNAP/usr/share/audacity
+    bind: $SNAP/usr/share/audacity
+  /usr/share/locale:
+    bind: $SNAP/usr/share/locale
 
 plugs:
   gtk-2-engines:
@@ -52,9 +54,8 @@ environment:
   ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
   FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
-  GTK_DATA_PREFIX: $SNAP
   LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
-  XDG_DATA_DIRS: $SNAP/share:$XDG_DATA_DIRS
+  XDG_DATA_DIRS: $SNAP/data-dir:$SNAP/usr/share:$XDG_DATA_DIRS
 
 apps:
   audacity:
@@ -70,6 +71,7 @@ apps:
       - audio-record
       - desktop
       - desktop-legacy
+      - gsettings
       - home
       - pulseaudio
       - removable-media
@@ -210,7 +212,7 @@ parts:
       sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
     configflags:
-      - -DCMAKE_INSTALL_PREFIX=/usr
+      - -DCMAKE_INSTALL_PREFIX=/snap/audacity/current/usr
       - -DCMAKE_BUILD_TYPE=Release
     build-snaps:
       - cmake
@@ -223,6 +225,9 @@ parts:
       - libavformat-dev
       - libflac-dev
       - libflac++-dev
+      - libgstreamer-plugins-base1.0-dev
+      - libgstreamer-plugins-good1.0-dev
+      - libgstreamer1.0-dev
       - libgtk2.0-dev
       - libid3tag0-dev
       - libjack-jackd2-dev
@@ -246,6 +251,9 @@ parts:
       - libavformat57
       - libflac++6v5
       - libflac8
+      - libgstreamer-plugins-base1.0-0
+      - libgstreamer-plugins-good1.0-0
+      - libgstreamer1.0-0
       - libgtk2.0-0
       - libid3tag0
       - libmad0
@@ -263,6 +271,10 @@ parts:
       - libvorbisenc2
       - libvorbisfile3
       - nasm
+    organize:
+      snap/audacity/current/usr: usr
+    prime:
+      - -snap/audacity
 
   gtk-locales:
     plugin: nil
