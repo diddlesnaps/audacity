@@ -50,7 +50,6 @@ plugs:
     default-provider: gtk-common-themes:icon-themes
 
 environment:
-  UBUNTU_MENUPROXY: '0'
   ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
   FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
@@ -243,11 +242,11 @@ parts:
       - libsoxr-dev
       - libtwolame-dev
       - libvamp-hostsdk3v5
-      - libvamp-sdk2v5
       - libvorbis-dev
       - python
       - python3
     stage-packages:
+      - appmenu-gtk2-module
       - libavformat57
       - libflac++6v5
       - libflac8
@@ -267,6 +266,7 @@ parts:
       - libsoundtouch1
       - libsoxr0
       - libtwolame0
+      - libvamp-hostsdk3v5
       - libvorbis0a
       - libvorbisenc2
       - libvorbisfile3
