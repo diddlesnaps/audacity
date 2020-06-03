@@ -216,6 +216,7 @@ parts:
     build-snaps:
       - cmake
     build-environment:
+      - PATH: /snap/bin:$PATH
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
       - WX_CONFIG: $SNAPCRAFT_STAGE/usr/bin/wx-config
