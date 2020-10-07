@@ -26,6 +26,8 @@ layout:
     bind-file: $SNAP_DATA/etc/ld.so.cache
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+  /usr/share/alsa:
+    bind: $SNAP/usr/share/alsa
   /usr/share/audacity:
     bind: $SNAP/usr/share/audacity
   /usr/share/locale:
@@ -50,7 +52,6 @@ plugs:
     default-provider: gtk-common-themes:icon-themes
 
 environment:
-  ALSA_CONFIG_PATH: $SNAP/etc/alsa.conf
   FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
   LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
@@ -66,12 +67,14 @@ apps:
     desktop: usr/share/applications/audacity.desktop
     common-id: org.audacityteam.Audacity
     plugs:
+      - alsa
       - audio-playback
       - audio-record
       - desktop
       - desktop-legacy
       - gsettings
       - home
+      - jack1
       - pulseaudio
       - removable-media
       - unity7
@@ -137,6 +140,7 @@ parts:
     stage-packages:
       - libasound2
       - libasound2-plugins
+      - yad
 
   wxwidgets:
     after: [desktop-gtk2]
