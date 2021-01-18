@@ -16,6 +16,7 @@ description: |
 grade: stable
 confinement: strict
 base: core18
+compression: lzo
 
 architectures:
   - build-on: amd64
@@ -54,7 +55,7 @@ plugs:
 environment:
   FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
-  LD_LIBRARY_PATH: $LD_LIBRARY_PATH:$SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+  LD_LIBRARY_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   XDG_DATA_DIRS: $SNAP/data-dir:$SNAP/usr/share:$XDG_DATA_DIRS
 
 apps:
