@@ -76,6 +76,8 @@ apps:
       - gsettings
       - home
       - jack1
+      - network
+      - network-bind
       - pulseaudio
       - removable-media
       - unity7
