@@ -15,12 +15,13 @@ description: |
 
 grade: stable
 confinement: strict
-base: core18
+base: core20
 compression: lzo
 
 architectures:
   - build-on: amd64
-  - build-on: i386
+  - build-on: armhf
+  - build-on: arm64
 
 layout:
   /etc/ld.so.cache:
@@ -149,7 +150,7 @@ parts:
     after: [desktop-gtk2]
     source: https://github.com/audacity/wxWidgets.git
     plugin: autotools
-    configflags:
+    autotools-configure-parameters:
       - --prefix=/usr
       - --with-gtk
       - --enable-html
@@ -217,9 +218,13 @@ parts:
       sed -i -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
       sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
-    configflags:
+    cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/snap/audacity/current/usr
       - -DCMAKE_BUILD_TYPE=Release
+      - -Daudacity_has_networking=Off
+      - -Daudacity_has_sentry_reporting=Off
+      - -Daudacity_has_crashreports=Off
+      - -Daudacity_has_updates_check=Off
     build-snaps:
       - cmake
     build-environment:
@@ -229,7 +234,9 @@ parts:
       - WX_CONFIG: $SNAPCRAFT_STAGE/usr/bin/wx-config
     build-packages:
       - gettext
+      - libavcodec-dev
       - libavformat-dev
+      - libavutil-dev
       - libflac-dev
       - libflac++-dev
       - libgstreamer-plugins-base1.0-dev
@@ -255,7 +262,9 @@ parts:
       - python3
     stage-packages:
       - appmenu-gtk2-module
-      - libavformat57
+      - libavcodec58
+      - libavformat58
+      - libavutil56
       - libflac++6v5
       - libflac8
       - libgstreamer-plugins-base1.0-0
@@ -263,6 +272,7 @@ parts:
       - libgstreamer1.0-0
       - libgtk2.0-0
       - libid3tag0
+      - libjack-jackd2-0
       - libmad0
       - libmp3lame0
       - libogg0
@@ -323,7 +333,7 @@ parts:
     after: [ audacity, desktop-settings-build ]
     plugin: nil
     build-snaps:
-    - core18
+    - core20
     - gtk-common-themes
     - gtk2-common-themes
     override-prime: |
