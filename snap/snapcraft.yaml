@@ -24,10 +24,10 @@ architectures:
   - build-on: arm64
 
 layout:
-  /etc/ld.so.cache:
-    bind-file: $SNAP_DATA/etc/ld.so.cache
   /usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib:
     bind: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
+  /usr/lib/x86_64-linux-gnu/audacity:
+    bind: $SNAP/usr/lib/x86_64-linux-gnu/audacity
   /usr/share/alsa:
     bind: $SNAP/usr/share/alsa
   /usr/share/audacity:
@@ -54,14 +54,13 @@ plugs:
     default-provider: gtk-common-themes:icon-themes
 
 environment:
-  FINAL_BINARY: $SNAP/usr/bin/audacity
   GTK_PATH: $SNAP/lib/gtk-2.0
   LD_LIBRARY_PATH: $SNAP/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/alsa-lib
   XDG_DATA_DIRS: $SNAP/data-dir:$SNAP/usr/share:$XDG_DATA_DIRS
 
 apps:
   audacity:
-    command: bin/check-ld-cache $SNAP/usr/bin/audacity
+    command: usr/audacity
     # extensions: [gnome-3-28]
     command-chain:
     - bin/desktop-launch
@@ -86,27 +85,6 @@ apps:
       - x11
 
 parts:
-  fix-symlinks:
-    # REF: https://unix.stackexchange.com/questions/100918/convert-absolute-symlink-to-relative-symlink-with-simple-linux-command
-    plugin: nil
-    override-build: |
-      cat <<'EOF' > $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
-      cd $SNAPCRAFT_PART_INSTALL
-      find . -lname '/*' | while read l ; do
-        echo ln -sf $(echo $(echo $l | sed 's|/[^/]*|/..|g')$(readlink $l) | sed 's/.....//') $l
-      done | sh
-      EOF
-      chmod +x $SNAPCRAFT_PART_INSTALL/fix-symlinks.sh
-    prime:
-      - -*
-
-  scripts:
-    source: scripts
-    plugin: dump
-    organize:
-      build-ld-cache: bin/build-ld-cache
-      check-ld-cache: bin/check-ld-cache
-
   desktop-gtk2:
     source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
     source-subdir: gtk
@@ -134,6 +112,7 @@ parts:
       - locales-all
       - ibus-gtk
       - libibus-1.0-5
+      - appmenu-gtk2-module
 
   alsa-mixin:
     plugin: dump
@@ -146,59 +125,8 @@ parts:
       - libasound2-plugins
       - yad
 
-  wxwidgets:
-    after: [desktop-gtk2]
-    source: https://github.com/audacity/wxWidgets.git
-    plugin: autotools
-    autotools-configure-parameters:
-      - --prefix=/usr
-      - --with-gtk
-      - --enable-html
-      - --enable-intl
-      - --enable-xlocale
-      - --enable-sockets
-      - --enable-debugreport
-    override-build: |
-      snapcraftctl build
-      rm $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
-      ln -s ../lib/wx/config/gtk2-unicode-3.1 $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
-      sed -E -i 's|^prefix=(.*)-/usr|prefix=\1-'"$SNAPCRAFT_STAGE"'/usr|' $SNAPCRAFT_PART_INSTALL/usr/bin/wx-config
-    build-environment:
-      - CFLAGS: -O2 -pipe
-      - CXXFLAGS: -O2 -pipe
-    build-packages:
-      - g++
-      - libglu1-mesa-dev
-      - libgstreamer-plugins-base1.0-dev
-      - libgstreamer1.0-dev
-      - libgtk2.0-dev
-      - libjpeg8-dev
-      - liblzma-dev
-      - libmspack-dev
-      - libnotify-dev
-      - libsdl2-dev
-      - libsecret-1-dev
-      - libsoup2.4-dev
-      - libtiff-dev
-      - nasm
-    stage-packages:
-      - libglu1-mesa
-      - libgstreamer-plugins-base1.0-0
-      - libgstreamer1.0-0
-      - libgtk2.0-0
-      - libice6
-      - libjpeg8
-      - liblzma5
-      - libmspack0
-      - libnotify4
-      - libsdl2-2.0-0
-      - libsecret-1-0
-      - libsm6
-      - libsoup2.4-1
-      - libtiff5
-
   audacity:
-    after: [alsa-mixin, desktop-gtk2, wxwidgets]
+    after: [alsa-mixin, desktop-gtk2]
     plugin: cmake
     source: https://github.com/audacity/audacity.git
     parse-info: [usr/share/metainfo/audacity.appdata.xml]
@@ -220,78 +148,57 @@ parts:
       sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
     cmake-parameters:
-      - -DCMAKE_INSTALL_PREFIX=/snap/audacity/current/usr
+      - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
       - -Daudacity_has_networking=Off
       - -Daudacity_has_sentry_reporting=Off
       - -Daudacity_has_crashreports=Off
       - -Daudacity_has_updates_check=Off
+      - -Daudacity_use_ffmpeg=loaded
     build-snaps:
       - cmake
     build-environment:
       - PATH: /snap/bin:$PATH
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
-      - WX_CONFIG: $SNAPCRAFT_STAGE/usr/bin/wx-config
     build-packages:
-      - gettext
+      - build-essential
       - libavcodec-dev
       - libavformat-dev
       - libavutil-dev
-      - libflac-dev
-      - libflac++-dev
       - libgstreamer-plugins-base1.0-dev
       - libgstreamer-plugins-good1.0-dev
       - libgstreamer1.0-dev
-      - libgtk2.0-dev
       - libid3tag0-dev
       - libjack-jackd2-dev
       - libmad0-dev
       - libmp3lame-dev
-      - libogg-dev
-      - libportmidi-dev
-      - libportsmf-dev
       - libpulse-dev
-      - libsbsms-dev
-      - libsndfile1-dev
       - libsoundtouch-dev
       - libsoxr-dev
       - libtwolame-dev
-      - libvamp-hostsdk3v5
-      - libvorbis-dev
-      - python3
       - python3-pip
+      - uuid-dev
+      - nasm
     stage-packages:
-      - appmenu-gtk2-module
       - libavcodec58
       - libavformat58
       - libavutil56
-      - libflac++6v5
-      - libflac8
       - libgstreamer-plugins-base1.0-0
       - libgstreamer-plugins-good1.0-0
       - libgstreamer1.0-0
-      - libgtk2.0-0
       - libid3tag0
       - libjack-jackd2-0
       - libmad0
       - libmp3lame0
       - libogg0
-      - libportmidi0
-      - libportsmf0v5
       - libpulse0
-      - libsbsms10
-      - libsndfile1
       - libsoundtouch1
       - libsoxr0
       - libtwolame0
-      - libvamp-hostsdk3v5
-      - libvorbis0a
-      - libvorbisenc2
-      - libvorbisfile3
-      - nasm
-    organize:
-      snap/audacity/current/usr: usr
+      - libuuid1
+    # organize:
+    #   snap/audacity/current/usr: usr
     prime:
       - -snap/audacity
 

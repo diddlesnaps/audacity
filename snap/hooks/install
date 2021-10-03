@@ -1,3 +1,0 @@
-#!/bin/bash -ex
-
-exec "$SNAP/bin/desktop-launch" "$SNAP/bin/build-ld-cache"
