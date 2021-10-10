@@ -150,6 +150,7 @@ parts:
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
+      - -DAUDACITY_BUILD_LEVEL=2
       - -Daudacity_has_networking=Off
       - -Daudacity_has_sentry_reporting=Off
       - -Daudacity_has_crashreports=Off
