@@ -131,6 +131,7 @@ parts:
     source: https://github.com/audacity/audacity.git
     parse-info: [usr/share/metainfo/audacity.appdata.xml]
     override-pull: |
+      rm -f /usr/bin/cc /usr/bin/c++
       pip3 install conan
       snapcraftctl pull
       last_committed_tag="$(git describe --tags --abbrev=0)"
