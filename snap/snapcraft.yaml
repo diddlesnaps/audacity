@@ -224,16 +224,22 @@ parts:
       - nasm
       - portaudio19-dev
       - python3-pip
+      - re2c
       - uuid-dev
+      - vamp-plugin-sdk
       - zlib1g-dev
     stage-packages:
       - libavcodec58
       - libavformat58
       - libavutil56
       - libcurl4
+      - libdouble-conversion3
       - libexpat1
       - libflac8
       - libflac++6v5
+      - libgl1
+      - libglvnd0
+      - libglx0
       - libgstreamer-plugins-base1.0-0
       - libgstreamer-plugins-good1.0-0
       - libgstreamer1.0-0
@@ -245,9 +251,14 @@ parts:
       - libmp3lame0
       - libopus0
       - libogg0
+      - libpcre2-16-0
+      - libportaudio2
       - libportmidi0
       - libportsmf0v5
       - libpulse0
+      - libqt5core5a
+      - libqt5gui5
+      - libqt5widgets5
       - libsbsms10
       - libserd-0-0
       - libsndfile1
@@ -259,6 +270,8 @@ parts:
       - libsuil-0-0
       - libtwolame0
       - libuuid1
+      - libvamp-hostsdk3v5
+      - libvamp-sdk2v5
       - libvorbis0a
       - libvorbisenc2
       - zlib1g
