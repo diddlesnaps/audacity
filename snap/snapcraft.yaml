@@ -206,6 +206,7 @@ parts:
       - libmad0-dev
       - libmp3lame-dev
       - libogg-dev
+      - libopus-dev
       - libportmidi-dev
       - libportsmf-dev
       - libpulse-dev
@@ -242,6 +243,7 @@ parts:
       - liblilv-0-0
       - libmad0
       - libmp3lame0
+      - libopus0
       - libogg0
       - libportmidi0
       - libportsmf0v5
