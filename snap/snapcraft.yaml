@@ -36,10 +36,6 @@ layout:
     bind: $SNAP/usr/share/locale
 
 plugs:
-  gtk-2-engines:
-    interface: content
-    target: $SNAP/lib/gtk-2.0
-    default-provider: gtk2-common-themes:gtk-2-engines
   gtk-2-themes:
     interface: content
     target: $SNAP/data-dir/themes
@@ -114,6 +110,36 @@ parts:
       - libibus-1.0-5
       - appmenu-gtk2-module
 
+  engines:
+    plugin: nil
+    stage-packages:
+      - gtk2-engines
+      - gtk2-engines-pixbuf
+      - gtk2-engines-murrine
+    organize:
+      usr/lib/$SNAPCRAFT_ARCH_TRIPLET/gtk-2.0: lib/gtk-2.0
+    stage:
+      - lib/gtk-2.0/*/engines/libhcengine.so
+      - lib/gtk-2.0/*/engines/libmurrine.so
+      - lib/gtk-2.0/*/engines/libpixmap.so
+
+  # Adwaita, Adwaita-dark: adwaita, pixmap
+  # HighContrast: hcengine
+  gnome-themes-extra:
+    plugin: autotools
+    source: https://gitlab.gnome.org/GNOME/gnome-themes-extra.git
+    source-type: git
+    autotools-configure-parameters:
+      - --enable-gtk2-engine
+      - --disable-gtk3-engine
+    build-packages:
+      - gnome-common
+      - libgtk2.0-dev
+      - gtk-update-icon-cache
+    stage:
+      - lib/gtk-2.0/*/engines/libadwaita.so
+
+
   alsa-mixin:
     plugin: dump
     source: https://github.com/diddlesnaps/snapcraft-alsa.git
@@ -134,17 +160,10 @@ parts:
       rm -f /usr/bin/cc /usr/bin/c++
       pip3 install conan
       snapcraftctl pull
-      last_committed_tag="$(git describe --tags --abbrev=0)"
-      last_released_tag="$(snap info $SNAPCRAFT_PROJECT_NAME | awk '$1 == "beta:" { print $2 }' || echo "unknown")"
-      # If the latest tag from the upstream project has not been released to
-      # beta, build that tag instead of master.
-      if [ "${last_committed_tag}" != "${last_released_tag}" ]; then
-        git fetch
-        git checkout "${last_committed_tag}"
-        snapcraftctl set-version "$(echo "${last_committed_tag}" | sed -E -e "s|^$SNAPCRAFT_PROJECT_NAME-?||i")"
-      else
-        snapcraftctl set-version "$(git rev-parse --short HEAD)"
-      fi
+      VERSION=$(curl https://api.github.com/repos/audacity/audacity/releases/latest | jq -r '.tag_name')
+      git fetch
+      git checkout "$VERSION"
+      snapcraftctl set-version "$(echo "$VERSION" | sed -E -e "s|^$SNAPCRAFT_PROJECT_NAME-?||i")"
       sed -i -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
       sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       git show -s --format="#define REV_LONG \"%H\"%n#define REV_TIME \"%cd\"%n" | tee src/RevisionIdent.h
@@ -152,6 +171,8 @@ parts:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
       - -DAUDACITY_BUILD_LEVEL=2
+      - -Daudacity_conan_allow_prebuilt_binaries=Off
+      - -Daudacity_lib_preference=system
       - -Daudacity_has_networking=Off
       - -Daudacity_has_sentry_reporting=Off
       - -Daudacity_has_crashreports=Off
@@ -159,46 +180,86 @@ parts:
       - -Daudacity_use_ffmpeg=loaded
     build-snaps:
       - cmake
+      - jq
     build-environment:
       - PATH: /snap/bin:$PATH
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
     build-packages:
       - build-essential
+      - curl
       - libavcodec-dev
       - libavformat-dev
       - libavutil-dev
+      - libcurl4-openssl-dev
+      - libexpat1-dev
+      - libflac-dev
+      - libflac++-dev
       - libgstreamer-plugins-base1.0-dev
       - libgstreamer-plugins-good1.0-dev
       - libgstreamer1.0-dev
       - libid3tag0-dev
       - libjack-jackd2-dev
+      - libjpeg-turbo8-dev
+      - liblilv-dev
+      - lv2-dev
       - libmad0-dev
       - libmp3lame-dev
+      - libogg-dev
+      - libportmidi-dev
+      - libportsmf-dev
       - libpulse-dev
+      - libsbsms-dev
+      - libserd-dev
+      - libsndfile1-dev
+      - libsord-dev
       - libsoundtouch-dev
       - libsoxr-dev
+      - libsqlite3-dev
+      - libsratom-dev
+      - libsuil-dev
       - libtwolame-dev
+      - libvorbis-dev
+      - nasm
+      - portaudio19-dev
       - python3-pip
       - uuid-dev
-      - nasm
+      - zlib1g-dev
     stage-packages:
       - libavcodec58
       - libavformat58
       - libavutil56
+      - libcurl4
+      - libexpat1
+      - libflac8
+      - libflac++6v5
       - libgstreamer-plugins-base1.0-0
       - libgstreamer-plugins-good1.0-0
       - libgstreamer1.0-0
       - libid3tag0
       - libjack-jackd2-0
+      - libjpeg-turbo8
+      - liblilv-0-0
       - libmad0
       - libmp3lame0
       - libogg0
+      - libportmidi0
+      - libportsmf0v5
       - libpulse0
+      - libsbsms10
+      - libserd-0-0
+      - libsndfile1
+      - libsord-0-0
       - libsoundtouch1
       - libsoxr0
+      - libsqlite3-0
+      - libsratom-0-0
+      - libsuil-0-0
       - libtwolame0
       - libuuid1
+      - libvorbis0a
+      - libvorbisenc2
+      - zlib1g
 
   gtk-locales:
     plugin: nil
@@ -241,10 +302,9 @@ parts:
     build-snaps:
     - core20
     - gtk-common-themes
-    - gtk2-common-themes
     override-prime: |
       set -eux
       cd /snap/gtk-common-themes/current
       find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/usr/{} \;
-      cd /snap/gtk2-common-themes/current/lib
-      find . -type f,l -exec rm -f $SNAPCRAFT_PRIME/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/{} \;
+
+      mkdir $SNAPCRAFT_PRIME/data-dir
