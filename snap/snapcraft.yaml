@@ -60,7 +60,7 @@ environment:
 
 apps:
   audacity:
-    command: usr/audacity
+    command: usr/bin/audacity
     # extensions: [gnome-3-28]
     command-chain:
     - bin/desktop-launch
@@ -179,6 +179,7 @@ parts:
       - libsoundtouch-dev
       - libsoxr-dev
       - libtwolame-dev
+      - libxtst-dev
       - python3-pip
       - uuid-dev
       - nasm
@@ -199,6 +200,7 @@ parts:
       - libsoxr0
       - libtwolame0
       - libuuid1
+      - libxtst6
     # organize:
     #   snap/audacity/current/usr: usr
     prime:
