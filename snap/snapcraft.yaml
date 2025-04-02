@@ -64,7 +64,7 @@ parts:
     build-packages:
       - libasound2-dev
     stage-packages:
-      - libasound2
+      - libasound2t64
       - libasound2-plugins
       - yad
 
