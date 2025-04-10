@@ -21,6 +21,47 @@ distributions.</p>
 
 ([Don't have snapd installed?](https://snapcraft.io/docs/core/install))
 
+## OpenVINO™ AI Plugins
+
+This branch contains support for AI features including:
+
+  - Music Separation
+  - Noise Suppression
+  - Music Generation and Continuation
+  - Whisper Transcription
+  - Super Resolution
+
+The plugins and models come installed out-of-the-box and support running on Intel hardware (CPU, GPU, and NPU). Instructions for using each of the features can be found in the [upstream GitHub repository](https://github.com/intel/openvino-plugins-ai-audacity/tree/main/doc/feature_doc).
+
+> [!IMPORTANT]
+> Please ensure you are in the `render` Unix group on your system in order to access Intel accelerators for the plugins (Intel GPU and NPU).
+
+To check your current groups, please run the following from a terminal:
+
+```shell
+groups
+```
+
+If you do not see `render` listed in the output, you may add your current user with the following:
+
+```shell
+sudo usermod -a -G render $USER
+```
+
+Now log out and back in to ensure your active session has the `render` group included.
+
+To ensure the device nodes have appropriate group permissions set, you may also run:
+
+```shell
+sudo chown root:render /dev/accel/accel*
+sudo chmod g+rw /dev/accel/accel*
+sudo chown root:render /dev/dri/render*
+sudo chmod g+rw /dev/dri/render*
+```
+
+> [!IMPORTANT]
+> Since the models (which are roughly 6.2 GiB in size total) are built into the snap, downloading and installing the snap may take several minutes or longer, depending on the speed of your internet connection. Please be patient!
+
 ## Remaining tasks
 <!-- Uncomment and modify this when you have a screenshot
 ![my-snap-name](screenshot.png?raw=true "my-snap-name")

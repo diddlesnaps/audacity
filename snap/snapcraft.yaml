@@ -21,7 +21,6 @@ compression: lzo
 
 platforms:
  amd64:
- arm64:
 
 layout:
   /usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR/alsa-lib:
@@ -35,6 +34,14 @@ layout:
   /usr/share/locale:
     bind: $SNAP/usr/share/locale
 
+plugs:
+  intel-npu:
+    interface: custom-device
+    custom-device: intel-npu-device
+  npu-libs:
+    interface: content
+    content: npu-libs-2404
+    target: $SNAP/npu-libs
 
 apps:
   audacity:
@@ -49,12 +56,17 @@ apps:
       - audio-playback
       - audio-record
       - home
+      - intel-npu
       - jack1
       - network
       - network-bind
+      - npu-libs
       - pulseaudio
       - removable-media
       - unity7
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$LD_LIBRARY_PATH
+      OCL_ICD_VENDORS: $SNAP/etc/OpenCL/vendors
 
 parts:
   alsa-mixin:
@@ -68,8 +80,89 @@ parts:
       - libasound2-plugins
       - yad
 
+  openvino-tokenizers-extension:
+    source-type: git
+    source: https://github.com/openvinotoolkit/openvino_tokenizers
+    source-tag: 2024.6.0.0
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/usr
+    build-packages:
+      - libtbb-dev
+    build-snaps:
+      # in the future ideally we'll have versioned tracks to use here
+      - openvino-toolkit-2404/latest/edge
+    build-environment:
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+
+  libtorch:
+    plugin: nil
+    build-packages:
+      - wget
+      - unzip
+    override-build: |
+      wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcpu.zip
+      mkdir -p ${CRAFT_PART_INSTALL}/usr/local
+      unzip libtorch-cxx11-abi-shared-with-deps-2.4.1+cpu.zip -d ${CRAFT_PART_INSTALL}/usr/local
+
+  opencl:
+    # Includes all the compute runtime and OpenCL bits needed for Intel GPU support
+    plugin: nil
+    build-packages:
+      - wget
+    override-build: |
+      mkdir -p neo
+      cd neo
+      # Install Intel graphics compiler and compute runtime
+      # This is required to enable GPU support for OpenVINO
+      # https://docs.openvino.ai/2024/get-started/configurations/configurations-intel-gpu.html
+      wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb
+      wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu_1.6.32224.5_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb
+      dpkg --root=$CRAFT_PART_INSTALL --force-all -i *.deb
+      # update paths to the Intel Installable Client Drivers (ICDs) for OpenCL
+      intel_icd="${CRAFT_PART_INSTALL}"/etc/OpenCL/vendors/intel.icd
+      intel_icd_so_path=$(cat ${intel_icd})
+      base_path="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
+      echo "${base_path}""${intel_icd_so_path}" > "${intel_icd}"
+      intel_legacy1_icd="${CRAFT_PART_INSTALL}"/etc/OpenCL/vendors/intel_legacy1.icd
+      if [ -f ${intel_legacy1_icd} ]; then
+        intel_legacy1_icd_so_path=$(cat ${intel_legacy1_icd})
+        echo "${base_path}""${intel_legacy1_icd_so_path}" > "${intel_legacy1_icd}"
+      fi
+      # fix broken sym links
+      cd "${CRAFT_PART_INSTALL}"
+      ln -sf "${base_path}"/usr/bin/ocloc-24.39.1 etc/alternatives/ocloc
+      ln -sf "${base_path}"/etc/alternatives/ocloc usr/bin/ocloc
+      craftctl default
+
+  whisper.cpp:
+    after:
+      - libtorch
+    source-type: git
+    source: https://github.com/ggerganov/whisper.cpp
+    source-tag: v1.5.4
+    plugin: cmake
+    override-build: |
+      cmake ${CRAFT_PART_SRC} -DWHISPER_OPENVINO=ON
+      make -j $(nproc)
+      cmake --install . --config Release --prefix ${CRAFT_PART_INSTALL}/usr/local/whisper.cpp
+    build-snaps:
+      # in the future ideally we'll have versioned tracks to use here
+      - openvino-toolkit-2404/latest/edge
+    build-environment:
+      - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+
   audacity:
-    after: [alsa-mixin]
+    after:
+      - alsa-mixin
+      - openvino-tokenizers-extension
+      - libtorch
+      - whisper.cpp
     plugin: cmake
     source: https://github.com/audacity/audacity.git
     source-tag: Audacity-$SNAPCRAFT_PROJECT_VERSION
@@ -80,6 +173,10 @@ parts:
       sed -i -E 's|Exec=env GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       # mod-opus broken with "Error: inappropriate ioctl for device". This disables it.
       sed -i '/mod-opus/d' libraries/lib-module-manager/ModuleSettings.cpp
+      sed -i '/"mod-aup",/a\      "mod-openvino",' libraries/lib-module-manager/ModuleSettings.cpp
+      git clone --depth 1 --branch v3.7.1-R4.2 https://github.com/intel/openvino-plugins-ai-audacity.git
+      cp -r openvino-plugins-ai-audacity/mod-openvino ${CRAFT_PART_SRC}/modules/
+      sed -i '/   sharing/a\    mod-openvino' ${CRAFT_PART_SRC}/modules/CMakeLists.txt
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
@@ -99,6 +196,9 @@ parts:
       - PATH: /snap/bin:$PATH
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
+      - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+      - WHISPERCPP_ROOTDIR: $CRAFT_STAGE/usr/local/whisper.cpp
     build-packages:
       - build-essential
       - cmake
@@ -144,6 +244,7 @@ parts:
       - libwxgtk3.2-dev
       - lv2-dev
       - nasm
+      - ocl-icd-opencl-dev
       - portaudio19-dev
       - python3-pip
       - rapidjson-dev
@@ -153,6 +254,8 @@ parts:
       - wget
       - zlib1g
       - zlib1g-dev
+    build-snaps:
+      - openvino-toolkit-2404/latest/edge
     stage-packages:
       - libavcodec60
       - libavformat60
@@ -201,3 +304,12 @@ parts:
       - libvorbisenc2
       - libwxgtk3.2-1t64
       - zlib1g
+    stage-snaps:
+      - openvino-toolkit-2404/latest/edge
+
+  openvino-models:
+    plugin: dump
+    source: models/
+    organize:
+      openvino-models: usr/lib/openvino-models
+
