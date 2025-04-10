@@ -77,7 +77,9 @@ parts:
     override-pull: |
       craftctl default
       sed -i -E 's|Icon=.*|Icon=/usr/share/icons/hicolor/scalable/apps/audacity.svg|' src/audacity.desktop.in
-      sed -i -E 's|Exec=env UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
+      sed -i -E 's|Exec=env GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
+      # mod-opus broken with "Error: inappropriate ioctl for device". This disables it.
+      sed -i '/mod-opus/d' libraries/lib-module-manager/ModuleSettings.cpp
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
