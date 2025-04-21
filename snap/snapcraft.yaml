@@ -92,7 +92,7 @@ parts:
       - libtbb-dev
     build-snaps:
       # in the future ideally we'll have versioned tracks to use here
-      - openvino-toolkit-2404/latest/edge
+      - openvino-toolkit-2404/latest/beta
     build-environment:
       - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
 
@@ -117,11 +117,14 @@ parts:
       # Install Intel graphics compiler and compute runtime
       # This is required to enable GPU support for OpenVINO
       # https://docs.openvino.ai/2024/get-started/configurations/configurations-intel-gpu.html
-      wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-core-2_2.5.6+18417_amd64.deb
-      wget https://github.com/intel/intel-graphics-compiler/releases/download/v2.5.6/intel-igc-opencl-2_2.5.6+18417_amd64.deb
-      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-level-zero-gpu_1.6.32224.5_amd64.deb
-      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/intel-opencl-icd_24.52.32224.5_amd64.deb
-      wget https://github.com/intel/compute-runtime/releases/download/24.52.32224.5/libigdgmm12_22.5.5_amd64.deb
+      intel_graphics_compiler_version="2.5.6"
+      intel_graphics_compiler_build="18417"
+      compute_runtime_version="24.52.32224.5"
+      wget https://github.com/intel/intel-graphics-compiler/releases/download/v${intel_graphics_compiler_version}/intel-igc-core-2_${intel_graphics_compiler_version}+${intel_graphics_compiler_build}_amd64.deb
+      wget https://github.com/intel/intel-graphics-compiler/releases/download/v${intel_graphics_compiler_version}/intel-igc-opencl-2_${intel_graphics_compiler_version}+${intel_graphics_compiler_build}_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/intel-level-zero-gpu_1.6.32224.5_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/intel-opencl-icd_${compute_runtime_version}_amd64.deb
+      wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/libigdgmm12_22.5.5_amd64.deb
       dpkg --root=$CRAFT_PART_INSTALL --force-all -i *.deb
       # update paths to the Intel Installable Client Drivers (ICDs) for OpenCL
       intel_icd="${CRAFT_PART_INSTALL}"/etc/OpenCL/vendors/intel.icd
@@ -152,7 +155,7 @@ parts:
       cmake --install . --config Release --prefix ${CRAFT_PART_INSTALL}/usr/local/whisper.cpp
     build-snaps:
       # in the future ideally we'll have versioned tracks to use here
-      - openvino-toolkit-2404/latest/edge
+      - openvino-toolkit-2404/latest/beta
     build-environment:
       - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
       - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
@@ -255,7 +258,7 @@ parts:
       - zlib1g
       - zlib1g-dev
     build-snaps:
-      - openvino-toolkit-2404/latest/edge
+      - openvino-toolkit-2404/latest/beta
     stage-packages:
       - libavcodec60
       - libavformat60
@@ -305,7 +308,7 @@ parts:
       - libwxgtk3.2-1t64
       - zlib1g
     stage-snaps:
-      - openvino-toolkit-2404/latest/edge
+      - openvino-toolkit-2404/latest/beta
 
   openvino-models:
     plugin: dump
