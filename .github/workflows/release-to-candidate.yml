@@ -62,7 +62,7 @@ jobs:
     name: 📸 Gather screenshots
     needs: call-for-testing
     environment: "Candidate Branch"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: 📸 Gather screenshots
         uses: snapcrafters/ci/get-screenshots@main
