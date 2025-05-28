@@ -7,13 +7,13 @@
 <p align="center"><b>This is the snap for Audacity</b>, <i>“Audio software for multi-track recording and editing”</i>. It works on Ubuntu, Fedora, Debian, and other major Linux
 distributions.</p>
 
-[![Snap Status](https://build.snapcraft.io/badge/diddlesnaps/audacity.svg)](https://build.snapcraft.io/user/diddlesnaps/audacity)
+<p align="center">
+<a href="https://snapcraft.io/audacity"><img src="https://snapcraft.io/audacity/badge.svg" alt="Snap Status"></a>
+<a href="https://github.com/snapcrafters/audacity/actions/workflows/sync-version-with-upstream.yml"><img src="https://github.com/snapcrafters/audacity/actions/workflows/sync-version-with-upstream.yml/badge.svg"></a>
+<a href="https://github.com/snapcrafters/audacity/actions/workflows/release-to-candidate.yaml"><img src="https://github.com/snapcrafters/audacity/actions/workflows/release-to-candidate.yaml/badge.svg"></a>
+<a href="https://github.com/snapcrafters/audacity/actions/workflows/promote-to-stable.yml"><img src="https://github.com/snapcrafters/audacity/actions/workflows/promote-to-stable.yml/badge.svg"></a>
+</p>
 
-<!-- Uncomment and modify this when you have a screenshot
-![my-snap-name](screenshot.png?raw=true "my-snap-name")
--->
-
-<p align="center">Published for <img src="https://raw.githubusercontent.com/anythingcodes/slack-emoji-for-techies/gh-pages/emoji/tux.png" align="top" width="24" /> with 💝 by Snapcrafters</p>
 
 ## Install
 
@@ -21,58 +21,66 @@ distributions.</p>
 
 ([Don't have snapd installed?](https://snapcraft.io/docs/core/install))
 
-## Remaining tasks
-<!-- Uncomment and modify this when you have a screenshot
-![my-snap-name](screenshot.png?raw=true "my-snap-name")
--->
+<p align="center">Published for <img src="https://raw.githubusercontent.com/anythingcodes/slack-emoji-for-techies/gh-pages/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters</p>
 
-Snapcrafters ([join us](https://forum.snapcraft.io/t/join-snapcrafters/1325)) 
-are working to land snap install documentation and
-the [snapcraft.yaml](https://github.com/snapcrafters/fork-and-rename-me/blob/master/snap/snapcraft.yaml)
-upstream so Audacity can authoritatively publish future releases.
+## How to contribute to this snap
 
-  - [x] Fork the [Snapcrafters template](https://github.com/snapcrafters/fork-and-rename-me) repository to your own GitHub account.
-    - If you have already forked the Snapcrafter template to your account and want to create another snap, you'll need to use GitHub's [Import repository](https://github.com/new/import) feature because you can only fork a repository once.
-  - [x] Rename the forked Snapcrafters template repository
-  - [x] Update the description of the repository
-  - [x] Update logos and references to `[Project]` and `[my-snap-name]`
-  - [x] Create a snap that runs in `devmode`
-  - [x] Register the snap in the store, **using the preferred upstream name**
-  - [ ] Add a screenshot to this `README.md`
-  - [x] Publish the `devmode` snap in the Snap store edge channel
-  - [x] Add install instructions to this `README.md`
-  - [x] Update snap store metadata, icons and screenshots
-  - [x] Convert the snap to `strict` confinement, or `classic` confinement if it qualifies
-  - [x] Publish the confined snap in the Snap store beta channel
-  - [x] Update the install instructions in this `README.md`
-  - [x] Post a call for testing on the [Snapcraft Forum](https://forum.snapcraft.io) - [link]()
-  - [x] Make a post in the [Snapcraft Forum](https://forum.snapcraft.io) asking for a transfer of the snap name from you to snapcrafters - [link]()
-  - [ ] Ask a [Snapcrafters admin](https://github.com/orgs/snapcrafters/people?query=%20role%3Aowner) to fork your repo into github.com/snapcrafters, and configure the repo for automatic publishing into edge on commit
-  - [ ] Add the provided Snapcraft build badge to this `README.md`
-  - [x] Publish the snap in the Snap store stable channel
-  - [x] Update the install instructions in this `README.md`
-  - [x] Post an announcement in the [Snapcraft Forum](https://forum.snapcraft.io) - [link]()
-  - [ ] Submit a pull request or patch upstream that adds snap install documentation - [link]()
-  - [ ] Submit a pull request or patch upstream that adds the `snapcraft.yaml` and any required assets/launchers - [link]()
-  - [ ] Add upstream contact information to the `README.md`  
-  - If upstream accept the PR:
-    - [ ] Request upstream create a Snap store account
-    - [ ] Contact the Snap Advocacy team to request the snap be transferred to upstream
-  - [ ] Ask the Snap Advocacy team to celebrate the snap - [link]()
+Thanks for your interest! Below you find instructions to help you contribute to this snap.
 
-If you have any questions, [post in the Snapcraft forum](https://forum.snapcraft.io).
+The general workflow is to submit pull requests that merges your changes into the `candidate` branch here on GitHub. Once the pull request has been merged, a GitHub action will automatically build the snap and publish it to the `candidate` channel in the Snap Store. Once the snap has been tested thoroughly, we promote it to the `stable` channel so all our users get it!
 
+### Initial setup
 
-## The Snapcrafters
+If this is your first time contributing to this snap, you first need to set up your own fork of this repository.
 
-| [![Daniel Llewellyn](http://gravatar.com/avatar/c77d9922c44ee0a34b8cabc4029b5082/?s=128)](https://github.com/diddledan/) |
-| :---: |
-| [Daniel Llewellyn](https://github.com/diddledan/) |
+1. [Fork the repository](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) into your own GitHub namespace.
+2. [Clone your fork](https://git-scm.com/book/en/v2/Git-Basics-Getting-a-Git-Repository), so that you have it on your local computer.
+3. Configure your local repo. To make things a bit more intuitive, we will rename your fork's remote to `myfork`, and add the snapcrafters repo as `snapcrafters`.
 
-<!-- Uncomment and modify this when you have upstream contacts
-## Upstream
+    ```shell
+    git remote rename origin myfork
+    git remote add snapcrafters https://github.com/snapcrafters/audacity.git
+    git fetch --all
+    ```
 
-| [![Upstream Name](https://gravatar.com/avatar/bc0bced65e963eb5c3a16cab8b004431?s=128)](https://github.com/upstreamname) |
-| :---: |
-| [Upstream Name](https://github.com/upstreamname) |
--->
+### Submitting changes in a pull request
+
+Once you're all setup for contributing, keep in mind that you want the git information to be all up-to-date. So if you haven't "fetched" all changes in a while, start with that:
+
+```shell
+git fetch --all -p
+```
+
+Now that your git metadata has been updated you are ready to create a bugfix branch, make your changes, and open a pull request.
+
+1. All pull requests should go to the stable branch so create your branch as a copy of the stable branch:
+
+    ```shell
+    git checkout -b my-bugfix-branch snapcrafters/candidate
+    ```
+
+2. Make your desired changes and build a snap locally for testing:
+
+    ```shell
+    snapcraft --use-lxd
+    ```
+
+3. After you are happy with your changes, commit them and push them to your fork so they are available on GitHub:
+
+    ```shell
+    git commit -a
+    git push -u myfork my-bugfix-branch
+    ```
+
+4. Then, [open up a pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests) from your `my-bugfix-branch` to the `snapcrafters/candidate` branch.
+5. Once you've opened the pull request, it will automatically trigger the build-test action that will launch a build of the snap. You can watch the progress of the snap build from your pull request (Show all checks -> Details). Once the snap build has completed, you can find the built snap (to test with) under "Artifacts".
+6. Someone from the team will review the open pull request and either merge it or start a discussion with you with additional changes or clarification needed.
+7. Once the pull request has been merged into the stable branch, a GitHub action will rebuild the snap using your changes and publish it to the [Snap Store](https://snapcraft.io/audacity) into the `candidate` channel. After sufficient testing of the snap from the candidate channel, one of the maintainers or administrators will promote the snap to the stable branch in the Snap Store.
+
+## Maintainers
+
+-   [@lucyllewy](https://github.com/lucyllewy/)
+
+## License
+
+-   The license of the build files in this repository is [MIT](https://github.com/snapcrafters/audacity/blob/candidate/LICENSE)
