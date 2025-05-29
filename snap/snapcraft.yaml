@@ -14,6 +14,12 @@ description: |
   * Change the speed or pitch of a recording
   * Apply a wide range of other effects to audio recordings
 
+website: https://www.audacityteam.org/
+contact: https://github.com/snapcrafters/audacity/issues
+issues: https://github.com/snapcrafters/audacity/issues
+source-code: https://github.com/snapcrafters/audacity
+license: MIT
+
 grade: stable
 confinement: strict
 base: core24
