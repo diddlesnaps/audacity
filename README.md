@@ -23,6 +23,59 @@ distributions.</p>
 
 <p align="center">Published for <img src="https://raw.githubusercontent.com/anythingcodes/slack-emoji-for-techies/gh-pages/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters</p>
 
+## OpenVINO™ AI Plugins
+
+This snap contains support for AI features including:
+
+  - Music Separation
+  - Noise Suppression
+  - Music Generation and Continuation
+  - Transcription
+  - Super Resolution
+
+The plugins come installed out-of-the-box and support running on Intel hardware only (CPU, GPU, and NPU). Instructions for using each of the features can be found in the [upstream GitHub repository](https://github.com/intel/openvino-plugins-ai-audacity/tree/main/doc/feature_doc).
+
+> [!IMPORTANT]
+> The models (which are roughly 6.2 GiB in size total) are NOT built into the snap. To use the AI features you must download and install them from the command line. Note that downloading the models may take several minutes or longer, depending on the speed of your internet connection. Please be patient!
+
+To ease the process of downloading and installing the models, an interactive command is available within the snap that can be invoked like so:
+
+```shell
+sudo audacity.fetch-models
+```
+
+This will provide you with an interactive menu where you can select the model you wish to download and install. Alternatively, if you wish to enable all of the AI features, you can simply pass the `--batch` flag:
+
+```shell
+sudo audacity.fetch-models --batch
+```
+
+
+> [!IMPORTANT]
+> Please ensure you are in the `render` Unix group on your system in order to access Intel accelerators for the plugins (Intel GPU and NPU).
+To check your current groups, please run the following from a terminal:
+
+```shell
+groups
+```
+
+If you do not see `render` listed in the output, you may add your current user with the following:
+
+```shell
+sudo usermod -a -G render $USER
+```
+
+Now log out and back in to ensure your active session has the `render` group included.
+
+To ensure the device nodes have appropriate group permissions set, you may also run:
+
+```shell
+sudo chown root:render /dev/accel/accel*
+sudo chmod g+rw /dev/accel/accel*
+sudo chown root:render /dev/dri/render*
+sudo chmod g+rw /dev/dri/render*
+```
+
 ## How to contribute to this snap
 
 Thanks for your interest! Below you find instructions to help you contribute to this snap.
