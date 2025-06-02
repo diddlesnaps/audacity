@@ -22,6 +22,11 @@ description: |
 
   sudo audacity.fetch-models
 
+  For Intel NPU support, make sure to also run the following prior to running Audacity:
+
+  sudo snap install intel-npu-driver
+  sudo snap connect audacity:npu-libs intel-npu-driver:npu-libs
+
 website: https://www.audacityteam.org/
 contact: https://github.com/snapcrafters/audacity/issues
 issues: https://github.com/snapcrafters/audacity/issues
