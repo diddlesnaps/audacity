@@ -54,6 +54,10 @@ layout:
     bind-file: $SNAP_DATA/etc/gitconfig
 
 plugs:
+  ffmpeg-2404:
+    interface: content
+    target: ffmpeg-platform
+    default-provider: ffmpeg-2404
   intel-npu:
     interface: custom-device
     custom-device: intel-npu-device
@@ -85,8 +89,9 @@ apps:
       - removable-media
       - unity7
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$SNAP/ffmpeg-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$LD_LIBRARY_PATH
       OCL_ICD_VENDORS: $SNAP/etc/OpenCL/vendors
+      PATH: $SNAP/ffmpeg-platform/usr/bin:$PATH
 
   fetch-models:
     command: usr/bin/fetch-models
@@ -230,7 +235,7 @@ parts:
       - -Daudacity_has_sentry_reporting=Off
       - -Daudacity_has_crashreports=Off
       - -Daudacity_has_updates_check=Off
-      - -Daudacity_use_ffmpeg=off
+      - -Daudacity_use_ffmpeg=loaded
       - -Daudacity_has_vst3=Off
       - -Daudacity_has_tests=Off
       - -DwxBUILD_TOOLKIT=gtk3
