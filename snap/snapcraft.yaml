@@ -14,6 +14,14 @@ description: |
   * Change the speed or pitch of a recording
   * Apply a wide range of other effects to audio recordings
 
+  This snap also includes OpenVINO™ AI plugins for music separation, noise suppression,
+  music generation and continuation, transcription, and super resolution. These plugins
+  can only be run on Intel hardware (CPU, GPU, and NPU) and a user must be in the render
+  Unix group in order to run on Intel accelerators (GPU and NPU). To ease the installation
+  of the AI models, the snap also includes a model management command that can be run using:
+
+  sudo audacity.fetch-models
+
 website: https://www.audacityteam.org/
 contact: https://github.com/snapcrafters/audacity/issues
 issues: https://github.com/snapcrafters/audacity/issues
@@ -40,6 +48,19 @@ layout:
     bind: $SNAP/usr/share/audacity
   /usr/share/locale:
     bind: $SNAP/usr/share/locale
+  $SNAP/usr/lib/openvino-models:
+    bind: $SNAP_DATA/models/openvino-models
+  /etc/gitconfig:
+    bind-file: $SNAP_DATA/etc/gitconfig
+
+plugs:
+  intel-npu:
+    interface: custom-device
+    custom-device: intel-npu-device
+  npu-libs:
+    interface: content
+    content: npu-libs-2404
+    target: $SNAP/npu-libs
 
 
 apps:
@@ -55,12 +76,25 @@ apps:
       - audio-playback
       - audio-record
       - home
+      - intel-npu
       - jack1
       - network
       - network-bind
+      - npu-libs
       - pulseaudio
       - removable-media
       - unity7
+    environment:
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$LD_LIBRARY_PATH
+      OCL_ICD_VENDORS: $SNAP/etc/OpenCL/vendors
+
+  fetch-models:
+    command: usr/bin/fetch-models
+    plugs:
+      - network
+    environment:
+      GIT_EXEC_PATH: $SNAP/usr/lib/git-core
+      GIT_TEMPLATE_DIR: $SNAP/usr/share/git-core/templates
 
 parts:
   alsa-mixin:
@@ -74,8 +108,100 @@ parts:
       - libasound2-plugins
       - yad
 
+  openvino-tokenizers-extension:
+    source-type: git
+    source: https://github.com/openvinotoolkit/openvino_tokenizers
+    source-tag: 2024.6.0.0
+    plugin: cmake
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_PREFIX=/usr
+    build-packages:
+      - libtbb-dev
+    build-snaps:
+      - openvino-toolkit-2404/2024/beta
+    build-environment:
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+    override-build: |
+      if [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ]; then
+        craftctl default
+      fi
+
+  libtorch:
+    plugin: nil
+    build-packages:
+      - wget
+      - unzip
+    override-build: |
+      if [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ]; then
+        wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.4.1%2Bcpu.zip
+        mkdir -p ${CRAFT_PART_INSTALL}/usr/local
+        unzip libtorch-cxx11-abi-shared-with-deps-2.4.1+cpu.zip -d ${CRAFT_PART_INSTALL}/usr/local
+      fi
+
+  opencl:
+    # Includes all the compute runtime and OpenCL bits needed for Intel GPU support
+    plugin: nil
+    build-packages:
+      - wget
+    override-build: |
+      if [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ]; then
+        mkdir -p neo
+        cd neo
+        # Install Intel graphics compiler and compute runtime
+        # This is required to enable GPU support for OpenVINO
+        # https://docs.openvino.ai/2024/get-started/configurations/configurations-intel-gpu.html
+        intel_graphics_compiler_version="2.5.6"
+        intel_graphics_compiler_build="18417"
+        compute_runtime_version="24.52.32224.5"
+        wget https://github.com/intel/intel-graphics-compiler/releases/download/v${intel_graphics_compiler_version}/intel-igc-core-2_${intel_graphics_compiler_version}+${intel_graphics_compiler_build}_amd64.deb
+        wget https://github.com/intel/intel-graphics-compiler/releases/download/v${intel_graphics_compiler_version}/intel-igc-opencl-2_${intel_graphics_compiler_version}+${intel_graphics_compiler_build}_amd64.deb
+        wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/intel-level-zero-gpu_1.6.32224.5_amd64.deb
+        wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/intel-opencl-icd_${compute_runtime_version}_amd64.deb
+        wget https://github.com/intel/compute-runtime/releases/download/${compute_runtime_version}/libigdgmm12_22.5.5_amd64.deb
+        dpkg --root=$CRAFT_PART_INSTALL --force-all -i *.deb
+        # update paths to the Intel Installable Client Drivers (ICDs) for OpenCL
+        intel_icd="${CRAFT_PART_INSTALL}"/etc/OpenCL/vendors/intel.icd
+        intel_icd_so_path=$(cat ${intel_icd})
+        base_path="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
+        echo "${base_path}""${intel_icd_so_path}" > "${intel_icd}"
+        intel_legacy1_icd="${CRAFT_PART_INSTALL}"/etc/OpenCL/vendors/intel_legacy1.icd
+        if [ -f ${intel_legacy1_icd} ]; then
+          intel_legacy1_icd_so_path=$(cat ${intel_legacy1_icd})
+          echo "${base_path}""${intel_legacy1_icd_so_path}" > "${intel_legacy1_icd}"
+        fi
+        # fix broken sym links
+        cd "${CRAFT_PART_INSTALL}"
+        ln -sf "${base_path}"/usr/bin/ocloc-24.39.1 etc/alternatives/ocloc
+        ln -sf "${base_path}"/etc/alternatives/ocloc usr/bin/ocloc
+        craftctl default
+      fi
+
+  whisper.cpp:
+    after:
+      - libtorch
+    source-type: git
+    source: https://github.com/ggerganov/whisper.cpp
+    source-tag: v1.5.4
+    plugin: cmake
+    override-build: |
+      if [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ]; then
+        cmake ${CRAFT_PART_SRC} -DWHISPER_OPENVINO=ON
+        make -j $(nproc)
+        cmake --install . --config Release --prefix ${CRAFT_PART_INSTALL}/usr/local/whisper.cpp
+      fi
+    build-snaps:
+      - openvino-toolkit-2404/2024/beta
+    build-environment:
+      - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+
   audacity:
-    after: [alsa-mixin]
+    after:
+      - alsa-mixin
+      - openvino-tokenizers-extension
+      - libtorch
+      - whisper.cpp
     plugin: cmake
     source: https://github.com/audacity/audacity.git
     source-tag: Audacity-$SNAPCRAFT_PROJECT_VERSION
@@ -86,6 +212,13 @@ parts:
       sed -i -E 's|Exec=env GDK_BACKEND=x11 UBUNTU_MENUPROXY=0 |Exec=|' src/audacity.desktop.in
       # mod-opus broken with "Error: inappropriate ioctl for device". This disables it.
       sed -i '/mod-opus/d' libraries/lib-module-manager/ModuleSettings.cpp
+      if [ "$CRAFT_ARCH_BUILD_FOR" == "amd64" ]; then
+        sed -i '/mod-opus/d' libraries/lib-module-manager/ModuleSettings.cpp
+        sed -i '/"mod-aup",/a\      "mod-openvino",' libraries/lib-module-manager/ModuleSettings.cpp
+        git clone --depth 1 --branch v3.7.1-R4.2 https://github.com/intel/openvino-plugins-ai-audacity.git
+        cp -r openvino-plugins-ai-audacity/mod-openvino ${CRAFT_PART_SRC}/modules/
+        sed -i '/   sharing/a\    mod-openvino' ${CRAFT_PART_SRC}/modules/CMakeLists.txt
+      fi
     cmake-parameters:
       - -DCMAKE_INSTALL_PREFIX=/usr
       - -DCMAKE_BUILD_TYPE=Release
@@ -105,6 +238,9 @@ parts:
       - PATH: /snap/bin:$PATH
       - CFLAGS: -O2 -pipe
       - CXXFLAGS: -O2 -pipe
+      - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
+      - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
+      - WHISPERCPP_ROOTDIR: $CRAFT_STAGE/usr/local/whisper.cpp
     build-packages:
       - build-essential
       - cmake
@@ -150,6 +286,7 @@ parts:
       - libwxgtk3.2-dev
       - lv2-dev
       - nasm
+      - ocl-icd-opencl-dev
       - portaudio19-dev
       - python3-pip
       - rapidjson-dev
@@ -159,6 +296,8 @@ parts:
       - wget
       - zlib1g
       - zlib1g-dev
+    build-snaps:
+      - openvino-toolkit-2404/2024/beta
     stage-packages:
       - libavcodec60
       - libavformat60
@@ -207,3 +346,19 @@ parts:
       - libvorbisenc2
       - libwxgtk3.2-1t64
       - zlib1g
+    stage-snaps:
+      - openvino-toolkit-2404/2024/beta
+
+  fetch-models:
+    plugin: dump
+    source: bin/
+    organize:
+      fetch-models: usr/bin/fetch-models
+    # fetch-models exits immediately if not run on Intel hardware,
+    # thus we don't need these packages in the part for arm64
+    stage-packages:
+      - to amd64:
+        - git
+        - git-lfs
+        - unzip
+        - wget
