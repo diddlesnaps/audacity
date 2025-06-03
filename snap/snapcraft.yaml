@@ -54,7 +54,7 @@ layout:
   /usr/share/locale:
     bind: $SNAP/usr/share/locale
   $SNAP/usr/lib/openvino-models:
-    bind: $SNAP_DATA/models/openvino-models
+    bind: $SNAP_COMMON/models/openvino-models
   /etc/gitconfig:
     bind-file: $SNAP_DATA/etc/gitconfig
 
@@ -129,7 +129,7 @@ parts:
     build-packages:
       - libtbb-dev
     build-snaps:
-      - openvino-toolkit-2404/2024/beta
+      - openvino-toolkit-2404/2024/stable
     build-environment:
       - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
     override-build: |
@@ -201,7 +201,7 @@ parts:
         cmake --install . --config Release --prefix ${CRAFT_PART_INSTALL}/usr/local/whisper.cpp
       fi
     build-snaps:
-      - openvino-toolkit-2404/2024/beta
+      - openvino-toolkit-2404/2024/stable
     build-environment:
       - LIBTORCH_ROOTDIR: $CRAFT_STAGE/usr/local/libtorch
       - OpenVINO_DIR: /snap/openvino-toolkit-2404/current/usr/lib/x86_64-linux-gnu/cmake
@@ -307,7 +307,7 @@ parts:
       - zlib1g
       - zlib1g-dev
     build-snaps:
-      - openvino-toolkit-2404/2024/beta
+      - openvino-toolkit-2404/2024/stable
     stage-packages:
       - libavcodec60
       - libavformat60
@@ -357,7 +357,7 @@ parts:
       - libwxgtk3.2-1t64
       - zlib1g
     stage-snaps:
-      - openvino-toolkit-2404/2024/beta
+      - openvino-toolkit-2404/2024/stable
 
   fetch-models:
     plugin: dump
