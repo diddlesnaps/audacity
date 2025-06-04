@@ -6,16 +6,16 @@ set -o pipefail
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
-MODELS="${SNAP_DATA}/models/openvino-models"
-MUSICGEN_TMP="${SNAP_DATA}/tmp/musicgen_tmp"
+MODELS="${SNAP_COMMON}/models/openvino-models"
+MUSICGEN_TMP="${SNAP_COMMON}/tmp/musicgen_tmp"
 MUSICGEN="${MODELS}/musicgen"
-WHISPER_TMP="${SNAP_DATA}/tmp/whisper_tmp"
+WHISPER_TMP="${SNAP_COMMON}/tmp/whisper_tmp"
 WHISPER="${MODELS}"
-SEPARATION_TMP="${SNAP_DATA}/tmp/separation_tmp"
+SEPARATION_TMP="${SNAP_COMMON}/tmp/separation_tmp"
 SEPARATION="${MODELS}"
-SUPPRESSION_TMP="${SNAP_DATA}/tmp/suppression_tmp"
+SUPPRESSION_TMP="${SNAP_COMMON}/tmp/suppression_tmp"
 SUPPRESSION="${MODELS}"
-RESOLUTION_TMP="${SNAP_DATA}/tmp/resolution_tmp"
+RESOLUTION_TMP="${SNAP_COMMON}/tmp/resolution_tmp"
 RESOLUTION="${MODELS}/audiosr"
 
 usage() {
@@ -24,7 +24,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h] [-v] [-b]
 
 Manage the installation of OpenVINO™ AI models for Audacity.
 
-This command must be run with sudo as it installs models to ${SNAP_DATA}, where write access
+This command must be run with sudo as it installs models to ${SNAP_COMMON}, where write access
 is only permitted for the root user.
 
 Available options:
@@ -171,6 +171,7 @@ Downloading Super Resolution models from Hugging Face. Please be patient!
   "
   silent git clone https://huggingface.co/Intel/versatile_audio_super_resolution_openvino "${RESOLUTION_TMP}"
   cd "${RESOLUTION_TMP}"
+  silent git checkout 9a97d7f128b22aea72e92862a3eccc310f88ac26
   silent git lfs install
   silent git lfs pull
   mkdir -p "${RESOLUTION}"
@@ -244,7 +245,7 @@ fi
 
 if [ "${SNAP_UID}" -ne 0 ]; then
   >&2 echo "
-This tool installs models to ${SNAP_DATA}, 
+This tool installs models to ${SNAP_COMMON},
 where write access is only permitted for the root user.
 Please re-run the command with sudo:
 
