@@ -35,11 +35,10 @@ This snap contains support for AI features including:
 
 The plugins come installed out-of-the-box and support running on Intel hardware only (CPU, GPU, and NPU). Instructions for using each of the features can be found in the [upstream GitHub repository](https://github.com/intel/openvino-plugins-ai-audacity/tree/main/doc/feature_doc).
 
-For Intel NPU support, make sure to install the snap containing the supporting libraries and to connect the Audacity snap prior to running Audacity:
+For Intel NPU support (which are available in Intel Core Ultra processors), make sure to install the snap containing the supporting libraries:
 
 ```shell
 sudo snap install intel-npu-driver
-sudo snap connect audacity:npu-libs intel-npu-driver:npu-libs
 ```
 
 > [!IMPORTANT]
