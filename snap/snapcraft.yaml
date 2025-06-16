@@ -94,7 +94,7 @@ apps:
       - removable-media
       - unity7
     environment:
-      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$SNAP/ffmpeg-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
+      LD_LIBRARY_PATH: $SNAP/usr/local/lib:$SNAP/usr/local/whisper.cpp/lib:$SNAP/usr/local/libtorch/lib:$SNAP/usr/runtime/lib/intel64:$SNAP/npu-libs:$SNAP/ffmpeg-platform/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR:$SNAP/usr/lib/$CRAFT_ARCH_TRIPLET_BUILD_FOR
       OCL_ICD_VENDORS: $SNAP/etc/OpenCL/vendors
       PATH: $SNAP/ffmpeg-platform/usr/bin:$PATH
 
